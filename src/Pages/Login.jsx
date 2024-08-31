@@ -1,23 +1,31 @@
 import React from "react";
-import { useDispatch } from "react-redux";
-import { login } from "../features/userSlice";
-import SpotifyWebApi from "spotify-web-api-js";
 import { useNavigate } from "react-router-dom";
 
-const spotifyApi = new SpotifyWebApi();
+const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
+const scope = 'user-read-private user-read-email';
 
+const generateCodeVerifier = () => {
+	const array = new Uint32Array(56);
+	window.crypto.getRandomValues(array);
+	return array.join('');
+};
+
+const base64UrlEncode = (str) => {
+	return btoa(str)
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=+$/, '');
+};
+
+const generateCodeChallenge = async (codeVerifier) => {
+	const encoder = new TextEncoder();
+	const data = encoder.encode(codeVerifier);
+	const digest = await crypto.subtle.digest('SHA-256', data);
+	return base64UrlEncode(String.fromCharCode(...new Uint8Array(digest)));
+};
 const Login = () => {
-	const dispatch = useDispatch();
-	const navigate = useNavigate();
 
-	const handleLogin = async () => {
-		try {
-			const userInfo = await spotifyApi.getMe();
-			dispatch(login(userInfo));
-		} catch (error) {
-			console.error("Error logging in:", error);
-		}
-	};
 
 	return <div>Login</div>;
 };
