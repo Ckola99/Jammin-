@@ -1,41 +1,57 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { authStatus } from "../features/userSlice";
+import { useSelector } from "react-redux";
 
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
-const scope = 'user-read-private user-read-email';
+const scope =
+	"user-read-private user-read-email playlist-read-private playlist-modify-public";
+const authUrl = new URL("https://accounts.spotify.com/authorize");
 
-const generateCodeVerifier = () => {
-	const array = new Uint32Array(56);
-	window.crypto.getRandomValues(array);
-	return array.join('');
+const generateRandomString = (length) => {
+	const possible =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	const values = crypto.getRandomValues(new Uint8Array(length));
+	return values.reduce(
+		(acc, x) => acc + possible[x % possible.length],
+		""
+	);
 };
 
-const base64UrlEncode = (str) => {
-	return btoa(str)
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_')
-		.replace(/=+$/, '');
-};
-
-const generateCodeChallenge = async (codeVerifier) => {
+const sha256 = async (plain) => {
 	const encoder = new TextEncoder();
-	const data = encoder.encode(codeVerifier);
-	const digest = await crypto.subtle.digest('SHA-256', data);
-	return base64UrlEncode(String.fromCharCode(...new Uint8Array(digest)));
+	const data = encoder.encode(plain);
+	return window.crypto.subtle.digest("SHA-256", data);
 };
+
+const base64encode = (input) => {
+	return btoa(String.fromCharCode(...new Uint8Array(input)))
+		.replace(/=/g, "")
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_");
+};
+
 const Login = () => {
-	const navigate = useNavigate();
+	const status = useSelector(authStatus);
 
 	const handleLogin = async () => {
-		const codeVerifier = generateCodeVerifier();
-		const codeChallenge = await generateCodeChallenge(codeVerifier);
+		const codeVerifier = generateRandomString(64);
+		const hashed = await sha256(codeVerifier);
+		localStorage.setItem("code_verifier", codeVerifier);
+		const codeChallenge = base64encode(hashed);
 
-		localStorage.setItem('code_verifier', codeVerifier);
+		const params = {
+			response_type: "code",
+			client_id: clientId,
+			scope,
+			code_challenge_method: "S256",
+			code_challenge: codeChallenge,
+			redirect_uri: redirectUri,
+		};
 
-		window.location.href = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${scope}&redirect_uri=${redirectUri}&code_challenge=${codeChallenge}&code_challenge_method=S256`
-	}
-
+		authUrl.search = new URLSearchParams(params).toString();
+		window.location.href = authUrl.toString();
+	};
 
 	return <button onClick={handleLogin}>Login with Spotify</button>;
 };
