@@ -25,8 +25,18 @@ const generateCodeChallenge = async (codeVerifier) => {
 	return base64UrlEncode(String.fromCharCode(...new Uint8Array(digest)));
 };
 const Login = () => {
+	const navigate = useNavigate();
+
+	const handleLogin = async () => {
+		const codeVerifier = generateCodeVerifier();
+		const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+		localStorage.setItem('code_verifier', codeVerifier);
+
+		window.location.href = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${scope}&redirect_uri=${redirectUri}&code_challenge=${codeChallenge}&code_challenge_method=S256`
+	}
 
 
-	return <div>Login</div>;
+	return <button onClick={handleLogin}>Login with Spotify</button>;
 };
 export default Login;
