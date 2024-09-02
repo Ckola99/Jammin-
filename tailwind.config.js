@@ -10,7 +10,10 @@ export default {
         green: "#1ED760",
         background: "#191414",
         gray: "#535353"
-      }
+      },
+      fontFamily: {
+        nunito: ['Nunito', 'sans-serif'],
+      },
     },
   },
   plugins: [],

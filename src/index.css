@@ -15,6 +15,7 @@ body {
   height: 100%;
   background: #191414;
   user-select: none;
+  font-family: "nunito"
 }
 
 @layer utilities {
@@ -26,4 +27,5 @@ body {
   .button {
     @apply px-5 py-2 rounded-3xl bg-gray
   }
+
 }
