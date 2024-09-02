@@ -53,6 +53,16 @@ const Login = () => {
 		window.location.href = authUrl.toString();
 	};
 
-	return <button onClick={handleLogin}>Login with Spotify</button>;
+	return (
+		<div>
+			{status === "loading" ? (
+				<p>Loading...</p>
+			) : (
+				<button onClick={handleLogin}>
+					Login with Spotify
+				</button>
+			)}
+		</div>
+	);
 };
 export default Login;

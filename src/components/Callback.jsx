@@ -16,7 +16,9 @@ const Callback = () => {
 
 			if (code) {
 				try {
-					dispatch(authenticateUser(code));
+					await dispatch(
+						authenticateUser(code)
+					).unwrap();
 					navigate("/");
 				} catch (error) {
 					console.error(

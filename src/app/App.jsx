@@ -9,12 +9,23 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Callback from "../components/Callback";
 import { useSelector, useDispatch } from "react-redux";
-import { isAuthenticated, authStatus, getRefreshToken } from "../features/userSlice";
+import {
+	isAuthenticated,
+	authStatus,
+	getRefreshToken,
+	fetchUserInfo,
+} from "../features/userSlice";
 
 function App() {
 	const grantedAccess = useSelector(isAuthenticated);
 	const status = useSelector(authStatus);
 	const dispatch = useDispatch();
+
+	useEffect(() => {
+		if (grantedAccess) {
+			dispatch(fetchUserInfo());
+		}
+	}, [grantedAccess, dispatch]);
 
 	useEffect(() => {
 		// Check token expiration time and set up a refresh timer
@@ -59,7 +70,6 @@ function App() {
 		return () => {
 			if (cleanup) cleanup();
 		};
-		
 	}, [dispatch]);
 
 	return (

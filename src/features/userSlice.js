@@ -7,7 +7,7 @@ const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
 const url = 'https://accounts.spotify.com/api/token'
 
 const initialState = {
-	isAuthenticated: false,
+	isAuthenticated: !!localStorage.getItem('access_token'),
 	userInfo: null,
 	status: 'idle',
 	error: null,
@@ -17,6 +17,7 @@ const initialState = {
 export const authenticateUser = createAsyncThunk(
 	'user/authenticateUser',
 	async (code, { rejectWithValue }) => {
+
 		const codeVerifier = localStorage.getItem('code_verifier');
 		if (!codeVerifier) {
 			return rejectWithValue('No code verifier found.');
@@ -32,7 +33,7 @@ export const authenticateUser = createAsyncThunk(
 				grant_type: 'authorization_code',
 				code,
 				redirect_uri: redirectUri,
-				code_verifier: codeVerifier,
+				code_verifier: localStorage.getItem('code_verifier'),
 			}),
 		};
 
@@ -45,16 +46,15 @@ export const authenticateUser = createAsyncThunk(
 				throw new Error(response.error_description || 'Failed to exchange authorization code for access token');
 			}
 
-			const accessToken = response.access_token;
-			const refreshToken = response.refresh_token;
-			const expiresIn = response.expires_in;
+			const { access_token, refresh_token, expires_in } = response;
+			const expirationTime = new Date().getTime() + expires_in * 1000;
 
-			const expirationTime = new Date().getTime() + expiresIn * 1000;
-
-			spotifyApi.setAccessToken(accessToken);
-			localStorage.setItem('access_token', accessToken);
-			localStorage.setItem('refresh_token', refreshToken);
+			spotifyApi.setAccessToken(access_token);
+			localStorage.setItem('access_token', access_token);
+			localStorage.setItem('refresh_token', refresh_token);
 			localStorage.setItem('token_expiration_time', expirationTime);
+
+
 
 			const userInfo = await spotifyApi.getMe();
 			return userInfo;
@@ -94,25 +94,41 @@ export const getRefreshToken = async () => {
 			throw new Error(response.error_description || 'Failed to refresh access token');
 		}
 
-		const accessToken = response.access_token;
-		const newRefreshToken = response.refresh_token;
-		const expiresIn = response.expires_in;
+		const { access_token, refresh_token, expires_in } = data;
+		const expirationTime = new Date().getTime() + expires_in * 1000;
 
-		const expirationTime = new Date().getTime() + expiresIn * 1000;
-
-		spotifyApi.setAccessToken(accessToken);
-		localStorage.setItem('access_token', accessToken);
+		spotifyApi.setAccessToken(access_token);
+		localStorage.setItem('access_token', access_token);
 		localStorage.setItem('token_expiration_time', expirationTime);
-		if (newRefreshToken) {
-			localStorage.setItem('refresh_token', newRefreshToken);
+		if (refresh_token) {
+			localStorage.setItem('refresh_token', refresh_token);
 		}
 
-		return accessToken;
+
+		return access_token;
 	} catch (error) {
 		console.error('Refresh token error:', error.message);
 	}
 };
 
+// Async thunk to fetch user info
+export const fetchUserInfo = createAsyncThunk(
+	'user/fetchUserInfo',
+	async (_, { rejectWithValue }) => {
+		const accessToken = localStorage.getItem('access_token');
+		if (!accessToken) {
+			return rejectWithValue('No access token found.');
+		}
+
+		try {
+			spotifyApi.setAccessToken(accessToken);
+			const userInfo = await spotifyApi.getMe();
+			return userInfo;
+		} catch (error) {
+			return rejectWithValue(error.message);
+		}
+	}
+);
 
 const userSlice = createSlice({
 	name: 'user',
@@ -123,6 +139,9 @@ const userSlice = createSlice({
 			state.userInfo = null;
 			state.status = 'idle';
 			state.error = null;
+			localStorage.removeItem('access_token');
+			localStorage.removeItem('refresh_token');
+			localStorage.removeItem('token_expiration_time');
 		},
 	},
 	extraReducers: (builder) => {
@@ -140,6 +159,9 @@ const userSlice = createSlice({
 				state.userInfo = null;
 				state.status = 'failed';
 				state.error = action.payload;
+			})
+			.addCase(fetchUserInfo.fulfilled, (state, action) => {
+				state.userInfo = action.payload;
 			});
 	},
 });
