@@ -93,7 +93,7 @@ const Login = () => {
 						className="text-2xl"
 					></p>
 					<button
-						className="bg-gradient-to-r from-[#1ED760] via-[#00FFAF] to-[#008F4C] mt-10 text-2xl text-black font-bold w-[289px] h-[77px] rounded-[38px] shadow shadow-white"
+						className="bg-gradient-to-r from-[#1ED760] via-[#00FFAF] to-[#008F4C] mt-10 text-2xl text-black font-bold w-[289px] h-[77px] rounded-[38px]"
 						onClick={handleLogin}
 					>
 						Sign-in with Spotify

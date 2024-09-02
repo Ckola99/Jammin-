@@ -34,7 +34,7 @@ const Callback = () => {
 
 	return (
 		<div>
-			<p className="text-red-400"></p>
+			<p className="text-red-400">loading...</p>
 		</div>
 	);
 };

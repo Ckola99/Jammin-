@@ -15,6 +15,7 @@ import {
 	getRefreshToken,
 	fetchUserInfo,
 } from "../features/userSlice";
+import Layout from "../components/Layout";
 
 function App() {
 	const grantedAccess = useSelector(isAuthenticated);
@@ -83,21 +84,18 @@ function App() {
 				/>
 
 				{/* Protected Routes */}
-				{/* Show a loading indicator if auth status is still being checked */}
-				{status === "loading" ? (
-					<Route path="/" element={<div></div>} />
-				) : (
+				<Route path="/" element={<Layout />}>
 					<Route
-						path="/"
+						index
 						element={
 							grantedAccess ? (
 								<Home />
 							) : (
-								<Navigate to="/login" />
+								<Navigate to="login" />
 							)
 						}
 					/>
-				)}
+				</Route>
 			</Routes>
 		</Router>
 	);
