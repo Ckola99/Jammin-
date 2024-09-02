@@ -46,9 +46,15 @@ export const authenticateUser = createAsyncThunk(
 			}
 
 			const accessToken = response.access_token;
+			const refreshToken = response.refresh_token;
+			const expiresIn = response.expires_in;
+
+			const expirationTime = new Date().getTime() + expiresIn * 1000;
 
 			spotifyApi.setAccessToken(accessToken);
 			localStorage.setItem('access_token', accessToken);
+			localStorage.setItem('refresh_token', refreshToken);
+			localStorage.setItem('token_expiration_time', expirationTime);
 
 			const userInfo = await spotifyApi.getMe();
 			return userInfo;
@@ -59,6 +65,53 @@ export const authenticateUser = createAsyncThunk(
 	}
 );
 
+// Async function to refresh the access token
+export const getRefreshToken = async () => {
+	const refreshToken = localStorage.getItem('refresh_token');
+	if (!refreshToken) {
+		console.error('No refresh token found.');
+		return;
+	}
+
+	const payload = {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+		},
+		body: new URLSearchParams({
+			grant_type: 'refresh_token',
+			refresh_token: refreshToken,
+			client_id: clientId,
+		}),
+	};
+
+	try {
+		const body = await fetch(url, payload);
+		const response = await body.json();
+
+		if (!body.ok) {
+			console.error('Error response:', response);
+			throw new Error(response.error_description || 'Failed to refresh access token');
+		}
+
+		const accessToken = response.access_token;
+		const newRefreshToken = response.refresh_token;
+		const expiresIn = response.expires_in;
+
+		const expirationTime = new Date().getTime() + expiresIn * 1000;
+
+		spotifyApi.setAccessToken(accessToken);
+		localStorage.setItem('access_token', accessToken);
+		localStorage.setItem('token_expiration_time', expirationTime);
+		if (newRefreshToken) {
+			localStorage.setItem('refresh_token', newRefreshToken);
+		}
+
+		return accessToken;
+	} catch (error) {
+		console.error('Refresh token error:', error.message);
+	}
+};
 
 
 const userSlice = createSlice({
