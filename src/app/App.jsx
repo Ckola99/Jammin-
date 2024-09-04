@@ -24,6 +24,7 @@ function App() {
 
 	useEffect(() => {
 		if (grantedAccess) {
+			console.log('info dispatched with code')
 			dispatch(fetchUserInfo());
 		}
 	}, [grantedAccess, dispatch]);
@@ -72,6 +73,7 @@ function App() {
 			if (cleanup) cleanup();
 		};
 	}, [dispatch]);
+
 
 	return (
 		<Router>

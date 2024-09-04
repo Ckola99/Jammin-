@@ -4,7 +4,7 @@ import SpotifyWebApi from 'spotify-web-api-js';
 const spotifyApi = new SpotifyWebApi();
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
-const url = 'https://accounts.spotify.com/api/token'
+const url = 'https://accounts.spotify.com/api/token';
 
 const initialState = {
 	isAuthenticated: !!localStorage.getItem('access_token'),
@@ -38,15 +38,17 @@ export const authenticateUser = createAsyncThunk(
 		};
 
 		try {
-			const body = await fetch(url, payload);
-			const response = await body.json();
+			const response = await fetch(url, payload);
+			const data = await response.json();
 
-			if (!body.ok) {
-				console.error('Error response:', response);
+			if (!response.ok) {
+				console.error('Error response:', data);
 				throw new Error(response.error_description || 'Failed to exchange authorization code for access token');
 			}
 
-			const { access_token, refresh_token, expires_in } = response;
+			console.log('access token request response:', data)
+
+			const { access_token, refresh_token, expires_in } = data;
 			const expirationTime = new Date().getTime() + expires_in * 1000;
 
 			spotifyApi.setAccessToken(access_token);
@@ -67,11 +69,15 @@ export const authenticateUser = createAsyncThunk(
 
 // Async function to refresh the access token
 export const getRefreshToken = async () => {
+
 	const refreshToken = localStorage.getItem('refresh_token');
+
 	if (!refreshToken) {
 		console.error('No refresh token found.');
-		return;
+		return undefined;
 	}
+
+	console.log('accessToken before:', localStorage.getItem('access_token'));
 
 	const payload = {
 		method: 'POST',
@@ -94,12 +100,17 @@ export const getRefreshToken = async () => {
 			throw new Error(response.error_description || 'Failed to refresh access token');
 		}
 
-		const { access_token, refresh_token, expires_in } = data;
+
+		const { access_token, refresh_token, expires_in } = response;
 		const expirationTime = new Date().getTime() + expires_in * 1000;
 
 		spotifyApi.setAccessToken(access_token);
+
+
 		localStorage.setItem('access_token', access_token);
 		localStorage.setItem('token_expiration_time', expirationTime);
+
+
 		if (refresh_token) {
 			localStorage.setItem('refresh_token', refresh_token);
 		}
@@ -108,6 +119,7 @@ export const getRefreshToken = async () => {
 		return access_token;
 	} catch (error) {
 		console.error('Refresh token error:', error.message);
+		return undefined;
 	}
 };
 

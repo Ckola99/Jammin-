@@ -6,16 +6,12 @@ import React from 'react';
 const Navbar = () => {
 	const profile = useSelector(user);
 	const navList = ["Jammin'", "Playlists", "Assistant"]
-	const grantedAccess =  useSelector(isAuthenticated)
-	const expirationTime = localStorage.getItem('token_expiration_time')
-	console.log(expirationTime)
 
-	console.log(profile);
 	return (
 		<div className="max-lg:pl-[22px] pt-[30px] shadow-lg shadow-black pb-5">
 			<nav className="">
 				<div className="flex justify-items-center gap-3">
-					{grantedAccess && (
+					{profile?.images?.length > 0 ? (
 						<img
 							src={
 								profile
@@ -25,6 +21,8 @@ const Navbar = () => {
 							alt="profile pic"
 							className="w-[35px] h-[35px] rounded-full object-cover"
 						/>
+					) : (
+						<div className="w-[35px] h-[35px] rounded-full bg-gray-300"></div>
 					)}
 					<h1 className="text-transform: uppercase text-2xl">
 						ja
@@ -33,7 +31,6 @@ const Navbar = () => {
 						</span>
 						in'
 					</h1>
-					<p>{expirationTime}</p>
 				</div>
 				<div className=" flex gap-2 hover:cursor-pointer mt-10">
 					{navList.map((navItem, index) => (
