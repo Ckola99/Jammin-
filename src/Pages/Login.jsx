@@ -9,7 +9,7 @@ gsap.registerPlugin(TextPlugin);
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
 const scope =
-	"user-read-private user-read-email playlist-read-private playlist-modify-public";
+	"user-read-private user-read-email playlist-read-private playlist-modify-public user-library-modify user-library-read";
 const authUrl = new URL("https://accounts.spotify.com/authorize");
 
 const generateRandomString = (length) => {
@@ -43,7 +43,7 @@ const Login = () => {
 		if (textRef.current) {
 			const timeline = gsap.timeline({ repeat: -1});
 
-			const text = "Your AI playlist assistant.";
+			const text = "Your AI music assistant.";
 			const duration = text.length * 0.2;
 
 			timeline.to(textRef.current, {
