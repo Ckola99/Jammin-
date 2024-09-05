@@ -9,7 +9,7 @@ gsap.registerPlugin(TextPlugin);
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
 const scope =
-	"user-read-private user-read-email playlist-read-private playlist-modify-public user-library-modify user-library-read";
+	"user-top-read user-read-private user-read-email playlist-read-private playlist-modify-public user-library-modify user-library-read";
 const authUrl = new URL("https://accounts.spotify.com/authorize");
 
 const generateRandomString = (length) => {
@@ -91,7 +91,7 @@ const Login = () => {
 					<p
 						ref={textRef}
 						className="text-2xl"
-					></p>
+					>Y</p>
 					<button
 						className="bg-gradient-to-r from-[#1ED760] via-[#00FFAF] to-[#008F4C] mt-10 text-2xl text-black font-bold w-[289px] h-[77px] rounded-[38px]"
 						onClick={handleLogin}
