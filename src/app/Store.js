@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from '../features/userSlice';
-import recommendationsReducer from '../features/recommendationsSlice'
+import recommendationsReducer from '../features/recommendationsSlice';
+
 
 export const store = configureStore({
 	reducer: {

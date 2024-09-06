@@ -339,3 +339,114 @@ export default SongRecommendation;
 This guide will help you integrate genre-based recommendations and surprise me features into your application. Adapt the implementation as needed for your specific use case and data structure.
 
 
+### adding back and front buttons
+
+```js
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../features/userSlice";
+import React, { useEffect, useState } from "react";
+import { IoPlay } from "react-icons/io5";
+import { GoHeartFill } from "react-icons/go";
+import { IoRemoveCircleOutline } from "react-icons/io5";
+import {
+  fetchSongRecommendations,
+  songsRecommended,
+  fetchTopArtists,
+  topArtistsSelector,
+} from "../features/recommendationsSlice";
+import { useSwipeable } from "react-swipeable";
+
+const Home = () => {
+  const dispatch = useDispatch();
+  const topArtists = useSelector(topArtistsSelector);
+  const myRecommended = useSelector(songsRecommended);
+
+  // State to track the current song index
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
+
+  useEffect(() => {
+    // Fetch top artists when component mounts
+    dispatch(fetchTopArtists());
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Fetch recommendations after top artists are loaded
+    if (topArtists.length > 0) {
+      dispatch(fetchSongRecommendations());
+    }
+  }, [dispatch, topArtists]);
+
+  // Handlers for next and previous songs
+  const handleNextSong = () => {
+    if (currentSongIndex < myRecommended.length - 1) {
+      setCurrentSongIndex((prevIndex) => prevIndex + 1);
+    }
+  };
+
+  const handlePreviousSong = () => {
+    if (currentSongIndex > 0) {
+      setCurrentSongIndex((prevIndex) => prevIndex - 1);
+    }
+  };
+
+  // Swipe handlers
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => handleNextSong(),
+    onSwipedRight: () => handlePreviousSong(),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true, // If you want to support mouse swiping on desktop too
+  });
+
+  // Handle case when no recommendations are available
+  if (myRecommended.length === 0) {
+    return <p>No recommendations available</p>;
+  }
+
+  const currentTrack = myRecommended[currentSongIndex];
+
+  return (
+    <div className="p-5" {...swipeHandlers}>
+      <h1>Song recommendations</h1>
+      <div className="border w-full h-auto grid grid-rows-[80%_20%]">
+        <div key={currentSongIndex}>
+          <img src={currentTrack.album.images[0]?.url} alt={currentTrack.name} className="w-full h-auto" />
+          <p>{currentTrack.name}</p>
+          <p className="opacity-50 text-[12px]">{currentTrack.artists.map((artist) => artist.name).join(", ")}</p>
+        </div>
+        <div className="flex gap-2">
+          <IoRemoveCircleOutline size={24} />
+          <IoPlay size={24}/>
+          <GoHeartFill size={24}/>
+        </div>
+      </div>
+
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={handlePreviousSong}
+          disabled={currentSongIndex === 0}
+          className="bg-gray-300 text-black px-4 py-2 rounded"
+        >
+          Previous
+        </button>
+
+        <button
+          onClick={handleNextSong}
+          disabled={currentSongIndex === myRecommended.length - 1}
+          className="bg-gray-300 text-black px-4 py-2 rounded"
+        >
+          Next
+        </button>
+      </div>
+
+      <button
+        onClick={() => dispatch(logout())}
+        className="bg-red-500 text-white px-4 py-2 rounded mt-4"
+      >
+        Logout
+      </button>
+    </div>
+  );
+};
+
+export default Home;
+```

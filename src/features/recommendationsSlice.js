@@ -3,107 +3,126 @@ import SpotifyWebApi from 'spotify-web-api-js';
 import { supabase } from '../utils/supabaseClient';
 
 const spotifyApi = new SpotifyWebApi();
+const accessToken = localStorage.getItem('access_token');
 
 const initialState = {
 	tracks: [],
 	likedTracks: [],
 	dislikedTracks: [],
+	topArtists: [],
 	status: 'idle',
 	error: null,
 };
 
-export const fetchRecommendations = createAsyncThunk(
-	'recommendations/fetchRecommendations',
-	async ({ genre = '' }, { rejectWithValue }) => {
+//fetch song recommendations
+export const fetchSongRecommendations = createAsyncThunk(
+	'recommendations/fetchSongRecommendations',
+	async (_, { rejectWithValue, getState }) => {
+
 		const accessToken = localStorage.getItem('access_token');
 
 		if (!accessToken) {
 			return rejectWithValue('No access token found.');
 		}
 
+		const state = getState();
+		const topArtists = state.recommendations.topArtists;
+
+		if (!topArtists || topArtists.length === 0) {
+			return rejectWithValue('No top genres available for recommendations.')
+		}
+
+
 		try {
 			spotifyApi.setAccessToken(accessToken);
+			const artistSeeds = topArtists.map((artist) => artist.id).slice(0, 5);
 
-			const options = genre ? { seed_genres: genre } : {};
-			const recommendations = await spotifyApi.getRecommendations(options);
-			return recommendations.tracks;
+			const response = await spotifyApi.getRecommendations({
+        		seed_artists: artistSeeds, // Use artist seeds
+        		limit: 20, // Specify how many tracks to return
+     			});
+
+			// Handle the response format to ensure it's JSON
+			if (!response || !response.tracks) {
+				return rejectWithValue('Invalid response from Spotify API.');
+			}
+
+			console.log('response:', response);
+
+			return response.tracks;
 		} catch (error) {
+			// Check for rate limiting
+			if (error.status === 429) {
+				const retryAfter = error.headers['retry-after'] || 1;
+				return rejectWithValue(`Rate limit hit. Retry after ${retryAfter} seconds.`);
+			}
 			return rejectWithValue(error.message);
 		}
 	}
 );
 
-export const updateUserPreferences = createAsyncThunk(
-	'recommendations/updateUserPreferences',
-	async ({ userId, trackId, liked }, { rejectWithValue }) => {
+//fetch top genres
+export const fetchTopArtists = createAsyncThunk(
+	'recommendations/fetchTopGenres',
+	async (_, { rejectWithValue }) => {
+
+		const accessToken = localStorage.getItem('access_token');
+
+		if (!accessToken) {
+			rejectWithValue('No access token found.');
+		}
+
 		try {
-			const { data, error } = await supabase
-				.from('user_preferences')
-				.upsert({
-					user_id: userId,
-					track_id: trackId,
-					liked,
-					created_at: new Date(),
-				});
+			spotifyApi.setAccessToken(accessToken);
+			const response = await spotifyApi.getMyTopArtists();
 
-			if (error) throw error;
+			const topArtists = response.items.slice(0, 5).map((artist) => ({
+				id: artist.id,
+				name: artist.name,
+			}));
 
-			return data;
+			console.log('Top artists:', topArtists)
+			return topArtists;
 		} catch (error) {
 			return rejectWithValue(error.message);
 		}
 	}
-);
-
-export const addTrackToPlaylist = createAsyncThunk(
-	'recommendations/addTrackToPlaylist',
-	async ({ playlistId, trackId }, { rejectWithValue }) => {
-		try {
-			const { data, error } = await supabase
-				.from('playlist_tracks')
-				.insert({
-					playlist_id: playlistId,
-					track_id: trackId,
-					added_at: new Date(),
-				});
-
-			if (error) throw error;
-
-			return data;
-		} catch (error) {
-			return rejectWithValue(error.message);
-		}
-	}
-);
+)
 
 const recommendationsSlice = createSlice({
 	name: 'recommendations',
 	initialState,
-	reducers: {
-		addLikedTrack: (state, action) => {
-			state.likedTracks.push(action.payload);
-		},
-		addDislikedTrack: (state, action) => {
-			state.dislikedTracks.push(action.payload);
-		},
-	},
+	reducers: {},
 	extraReducers: (builder) => {
 		builder
-			.addCase(fetchRecommendations.pending, (state) => {
+			.addCase(fetchSongRecommendations.pending, (state) => {
 				state.status = 'loading';
-				state.error = null;
 			})
-			.addCase(fetchRecommendations.fulfilled, (state, action) => {
+			.addCase(fetchSongRecommendations.fulfilled, (state, action) => {
 				state.status = 'succeeded';
 				state.tracks = action.payload;
+
 			})
-			.addCase(fetchRecommendations.rejected, (state, action) => {
+			.addCase(fetchSongRecommendations.rejected, (state, action) => {
+				state.status = 'failed'; // Update status to 'failed'
+				state.error = action.payload; // Store the error message
+			})
+			.addCase(fetchTopArtists.pending, (state) => {
+				state.status = 'loading';
+			})
+			.addCase(fetchTopArtists.fulfilled, (state, action) => {
+				state.topArtists = action.payload; // Store the fetched top genres
+				state.status = 'succeeded';
+			})
+			.addCase(fetchTopArtists.rejected, (state, action) => {
 				state.status = 'failed';
-				state.error = action.payload || 'Failed to fetch recommendations';
+				state.error = action.payload;
 			});
 	},
-});
-
-export const { addLikedTrack, addDislikedTrack } = recommendationsSlice.actions;
+})
 
 export default recommendationsSlice.reducer;
+export const fetchStatus = (state) => state.recommendations.status;
+export const songsRecommended = (state) => state.recommendations.tracks
+export const topGenresSelector = (state) => state.recommendations.topGenres;
+export const topArtistsSelector = (state) => state.recommendations.topArtists;
