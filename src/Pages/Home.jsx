@@ -10,28 +10,28 @@ import {
 	songsRecommended,
 	fetchTopArtists,
 	topArtistsSelector,
+	fetchNewReleases,
+	newReleases
 } from "../features/recommendationsSlice";
 
 const Home = () => {
 	const dispatch = useDispatch();
 	const topArtists = useSelector(topArtistsSelector);
 	const myRecommended = useSelector(songsRecommended);
+	const newSongs = useSelector(newReleases)
 
 	// State to track the current song index
 	const [currentSongIndex, setCurrentSongIndex] = useState(0);
 
 	useEffect(() => {
-		// Fetch top genres first
-		dispatch(fetchTopArtists());
+		dispatch(fetchTopArtists())
+		dispatch(fetchSongRecommendations())
 	}, [dispatch]);
 
 	useEffect(() => {
-		if (topArtists.length > 0) {
-			dispatch(fetchSongRecommendations());
-		}
-	}, [dispatch, topArtists]);
+		dispatch(fetchNewReleases())
 
-	console.log(myRecommended);
+	},[dispatch])
 
 	const handleNextSong = () => {
 		if (currentSongIndex < myRecommended.length - 1) {
@@ -45,6 +45,7 @@ const Home = () => {
 		}
 	};
 
+
 	// Swipe handlers
 	const swipeHandlers = useSwipeable({
 		onSwipedLeft: () => handleNextSong(),
@@ -54,6 +55,7 @@ const Home = () => {
 	});
 
 	const currentTrack = myRecommended[currentSongIndex];
+	console.log('new:', newSongs)
 
 	return (
 		<div className="p-5">
@@ -68,7 +70,10 @@ const Home = () => {
 					Enhance
 				</button>
 			</div>
-			<div className="border rounded-lg overflow-hidden w-full  grid grid-rows-[90%_10%] h-[400px]" {...swipeHandlers} >
+			<div
+				className="border rounded-lg overflow-hidden w-full  grid grid-rows-[90%_10%] h-[400px]"
+				{...swipeHandlers}
+			>
 				<div
 					key={currentSongIndex}
 					className="grid justify-items-center"
@@ -82,7 +87,7 @@ const Home = () => {
 						className=""
 					/>
 					<p>{currentTrack?.name}</p>
-					<p>
+					<p className="opacity-50 text-[12px]">
 						{currentTrack?.artists
 							.map(
 								(artist) =>
@@ -94,15 +99,32 @@ const Home = () => {
 
 				<div className="grid grid-cols-3 justify-items-center border-t">
 					<div>
-						<IoRemoveCircleOutline className="h-full" size={28}/>
+						<IoRemoveCircleOutline
+							className="h-full"
+							size={28}
+						/>
 					</div>
 					<div>
-						<IoPlay className="h-full" size={28}/>
+						<IoPlay
+							className="h-full"
+							size={28}
+						/>
 					</div>
 					<div>
-						<GoHeartFill className="h-full" size={28}/>
+						<GoHeartFill
+							className="h-full"
+							size={28}
+						/>
 					</div>
 				</div>
+			</div>
+			<div>
+				{newSongs.items.map(song => (
+					<div key={song.id}>
+						<img src={song.images[2]} alt=''/>
+
+					</div>
+				))}
 			</div>
 			<button
 				onClick={() => dispatch(logout())}

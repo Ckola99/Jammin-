@@ -3,13 +3,13 @@ import SpotifyWebApi from 'spotify-web-api-js';
 import { supabase } from '../utils/supabaseClient';
 
 const spotifyApi = new SpotifyWebApi();
-const accessToken = localStorage.getItem('access_token');
 
 const initialState = {
 	tracks: [],
 	likedTracks: [],
 	dislikedTracks: [],
 	topArtists: [],
+	newReleases: [],
 	status: 'idle',
 	error: null,
 };
@@ -89,6 +89,26 @@ export const fetchTopArtists = createAsyncThunk(
 	}
 )
 
+//fetch new releases
+export const fetchNewReleases = createAsyncThunk(
+	'recommendations/fetchNewReleases',
+	async (_, {rejectWithValue}) => {
+		const accessToken = localStorage.getItem('access_token');
+
+		if (!accessToken) {
+			rejectWithValue('No access token found.');
+		}
+
+		try {
+			spotifyApi.setAccessToken(accessToken)
+			const response = await spotifyApi.getNewReleases()
+			return response;
+		} catch (error) {
+			return rejectWithValue(error.message)
+		}
+	}
+)
+
 const recommendationsSlice = createSlice({
 	name: 'recommendations',
 	initialState,
@@ -117,6 +137,17 @@ const recommendationsSlice = createSlice({
 			.addCase(fetchTopArtists.rejected, (state, action) => {
 				state.status = 'failed';
 				state.error = action.payload;
+			})
+			.addCase(fetchNewReleases.pending, (state) => {
+				state.status = 'loading';
+			})
+			.addCase(fetchNewReleases.fulfilled, (state, action) => {
+				state.newReleases = action.payload; // Store the fetched top genres
+				state.status = 'succeeded';
+			})
+			.addCase(fetchNewReleases.rejected, (state, action) => {
+				state.status = 'failed';
+				state.error = action.payload;
 			});
 	},
 })
@@ -126,3 +157,4 @@ export const fetchStatus = (state) => state.recommendations.status;
 export const songsRecommended = (state) => state.recommendations.tracks
 export const topGenresSelector = (state) => state.recommendations.topGenres;
 export const topArtistsSelector = (state) => state.recommendations.topArtists;
+export const newReleases = (state) => state.recommendations.newReleases;
