@@ -8,8 +8,8 @@ const Navbar = () => {
 	const profile = useSelector(user);
 	const navLinks = [
 		{ name: "Jammin'", path: "/" },
-		{ name: "Playlists", path: "/playlists" },
-		{ name: "Assistant", path: "/assistant" },
+		{ name: "Playlists", path: "playlists" },
+		{ name: "Assistant", path: "assistant" },
 	];
 
 	return (
@@ -45,7 +45,7 @@ const Navbar = () => {
 							className={({
 								isActive,
 							}) =>
-								`w-[89px] h-[30px] rounded-[20px] flex-center font-bold ${
+								`w-[89px] h-[30px] rounded-[20px] grid place-content-center font-bold ${
 									isActive
 										? "bg-[#1ED760] text-black"
 										: "bg-gradient-to-r from-[#4b4b4b] via-[#535353] to-[#6b6b6b]"

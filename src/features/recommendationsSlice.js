@@ -39,7 +39,7 @@ export const fetchSongRecommendations = createAsyncThunk(
 
 			const response = await spotifyApi.getRecommendations({
         		seed_artists: artistSeeds, // Use artist seeds
-        		limit: 20, // Specify how many tracks to return
+        		limit: 40, // Specify how many tracks to return
      			});
 
 			// Handle the response format to ensure it's JSON
@@ -47,9 +47,13 @@ export const fetchSongRecommendations = createAsyncThunk(
 				return rejectWithValue('Invalid response from Spotify API.');
 			}
 
+			// Filter tracks to include only those with a preview URL
+        		const tracksWithPreviews = response.tracks.filter(track => track.preview_url);
+
+			const limitedTracks = tracksWithPreviews.slice(0, 20);
 			console.log('response:', response);
 
-			return response.tracks;
+			return limitedTracks;
 		} catch (error) {
 			// Check for rate limiting
 			if (error.status === 429) {
@@ -106,6 +110,25 @@ export const fetchNewReleases = createAsyncThunk(
 				limit: 10
 			})
 			return response;
+		} catch (error) {
+			return rejectWithValue(error.message)
+		}
+	}
+)
+
+//add to liked
+export const liked = createAsyncThunk(
+	'recommendations/liked',
+	async (_, { rejectWithValue }) => {
+
+		const accessToken = localStorage.getItem('access_token');
+
+		if (!accessToken) {
+			rejectWithValue('No access token found.');
+		}
+
+		try {
+			
 		} catch (error) {
 			return rejectWithValue(error.message)
 		}

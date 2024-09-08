@@ -5,8 +5,8 @@ import {
 	Routes,
 	Navigate,
 } from "react-router-dom";
-import Home from "../pages/Home";
-import Login from "../pages/Login";
+import Home from "../Pages/Home";
+import Login from "../Pages/Login";
 import Callback from "../components/Callback";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -16,6 +16,7 @@ import {
 	fetchUserInfo, logout
 } from "../features/userSlice";
 import Layout from "../components/Layout";
+import Playlists from "../Pages/Playlists";
 
 function App() {
 	const grantedAccess = useSelector(isAuthenticated);
@@ -94,7 +95,17 @@ function App() {
 							grantedAccess ? (
 								<Home />
 							) : (
-								<Navigate to="login" />
+								<Navigate to="/login" />
+							)
+						}
+					/>
+					<Route
+						path="playlists"
+						element={
+							grantedAccess ? (
+								<Playlists />
+							) : (
+								<Navigate to="/login" />
 							)
 						}
 					/>
