@@ -81,6 +81,7 @@ export const fetchTopArtists = createAsyncThunk(
 				name: artist.name,
 			}));
 
+
 			console.log('Top artists:', topArtists)
 			return topArtists;
 		} catch (error) {
@@ -101,7 +102,9 @@ export const fetchNewReleases = createAsyncThunk(
 
 		try {
 			spotifyApi.setAccessToken(accessToken)
-			const response = await spotifyApi.getNewReleases()
+			const response = await spotifyApi.getNewReleases({
+				limit: 10
+			})
 			return response;
 		} catch (error) {
 			return rejectWithValue(error.message)

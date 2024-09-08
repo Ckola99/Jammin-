@@ -109,6 +109,7 @@ export const getRefreshToken = async () => {
 
 		localStorage.setItem('access_token', access_token);
 		localStorage.setItem('token_expiration_time', expirationTime);
+		localStorage.setItem('expires_in', expires_in);
 
 
 		if (refresh_token) {
@@ -154,6 +155,7 @@ const userSlice = createSlice({
 			localStorage.removeItem('access_token');
 			localStorage.removeItem('refresh_token');
 			localStorage.removeItem('token_expiration_time');
+			localStorage.removeItem('expires_in');
 		},
 	},
 	extraReducers: (builder) => {

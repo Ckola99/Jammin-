@@ -13,7 +13,7 @@ import {
 	isAuthenticated,
 	authStatus,
 	getRefreshToken,
-	fetchUserInfo,
+	fetchUserInfo, logout
 } from "../features/userSlice";
 import Layout from "../components/Layout";
 
@@ -30,49 +30,50 @@ function App() {
 	}, [grantedAccess, dispatch]);
 
 	useEffect(() => {
-		// Check token expiration time and set up a refresh timer
-		const setupTokenRefresh = () => {
+		const checkTokenExpiration = async () => {
 			const expirationTime = localStorage.getItem(
 				"token_expiration_time"
 			);
-			if (!expirationTime) return;
-
 			const currentTime = new Date().getTime();
-			const timeLeft = expirationTime - currentTime;
 
-			if (timeLeft > 0) {
-				// Refresh the token 5 minutes before it expires
-				const refreshTime = timeLeft - 5 * 60 * 1000;
-
-				const timeoutId = setTimeout(async () => {
-					const accessToken =
-						await getRefreshToken();
-					if (accessToken) {
-						console.log(
-							"Access token refreshed"
-						);
-					} else {
-						console.error(
-							"Failed to refresh access token"
-						);
-					}
-				}, refreshTime);
-
-				// Return a cleanup function to clear the timeout
-				return () => {
-					clearTimeout(timeoutId);
-				};
+			if (!expirationTime || currentTime > expirationTime) {
+				dispatch(logout());
+				return;
 			}
+
+			const timeLeft = expirationTime - currentTime;
+			const refreshTime = timeLeft - 5 * 60 * 1000; // Refresh 5 minutes before expiration
+
+			const timeoutId = setTimeout(async () => {
+				const accessToken = await getRefreshToken();
+				if (!accessToken) {
+					dispatch(logout());
+				} else {
+					const newExpirationTime =
+						currentTime +
+						parseInt(
+							localStorage.getItem(
+								"expires_in"
+							)
+						);
+					localStorage.setItem(
+						"token_expiration_time",
+						newExpirationTime
+					);
+
+					// Set a timer to logout after the token is refreshed
+					setTimeout(() => {
+						dispatch(logout());
+					}, parseInt(localStorage.getItem("expires_in"))); // Timer set for the duration of the new token
+				}
+			}, refreshTime);
+
+			return () => clearTimeout(timeoutId);
 		};
 
-		// Call the setup function
-		const cleanup = setupTokenRefresh();
-
-		// Return cleanup function from useEffect
-		return () => {
-			if (cleanup) cleanup();
-		};
+		checkTokenExpiration();
 	}, [dispatch]);
+
 
 
 	return (
