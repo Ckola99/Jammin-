@@ -1,11 +1,16 @@
 import { useSelector } from "react-redux";
-import { user, isAuthenticated } from "../features/userSlice";
+import { user } from "../features/userSlice";
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 
 const Navbar = () => {
 	const profile = useSelector(user);
-	const navList = ["Jammin'", "Playlists", "Assistant"]
+	const navLinks = [
+		{ name: "Jammin'", path: "/" },
+		{ name: "Playlists", path: "/playlists" },
+		{ name: "Assistant", path: "/assistant" },
+	];
 
 	return (
 		<div className="max-lg:pl-[22px] pt-[30px] shadow-lg shadow-black pb-5">
@@ -32,14 +37,23 @@ const Navbar = () => {
 						in'
 					</h1>
 				</div>
-				<div className=" flex gap-2 hover:cursor-pointer mt-10">
-					{navList.map((navItem, index) => (
-						<div
-							className="w-[89px] h-[30px] bg-gradient-to-r from-[#4b4b4b] via-[#535353] to-[#6b6b6b] rounded-[20px] flex-center"
+				<div className="flex gap-2 mt-10">
+					{navLinks.map((link, index) => (
+						<NavLink
+							to={link.path}
 							key={index}
+							className={({
+								isActive,
+							}) =>
+								`w-[89px] h-[30px] rounded-[20px] flex-center font-bold ${
+									isActive
+										? "bg-[#1ED760] text-black"
+										: "bg-gradient-to-r from-[#4b4b4b] via-[#535353] to-[#6b6b6b]"
+								}`
+							}
 						>
-							{navItem}
-						</div>
+							{link.name}
+						</NavLink>
 					))}
 				</div>
 			</nav>
